@@ -3,6 +3,7 @@
 DriveHire is a car-hiring application built with TanStack Start, React, and Supabase.
 
 ## Development
+
 From the repository root, create your local environment file and install the locked dependencies:
 
 ```sh

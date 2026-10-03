@@ -30,7 +30,12 @@ export function useAccount() {
         supabase.from("user_roles").select("role").eq("user_id", user!.id),
       ]);
       const list = (roles ?? []).map((r) => r.role as string);
-      return { profile, roles: list, isOwner: list.includes("owner"), isAdmin: list.includes("admin") };
+      return {
+        profile,
+        roles: list,
+        isOwner: list.includes("owner"),
+        isAdmin: list.includes("admin"),
+      };
     },
   });
   return { user, ready, ...q.data, loading: !ready || (!!user && q.isLoading) };

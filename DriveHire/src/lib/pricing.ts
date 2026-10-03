@@ -6,7 +6,12 @@
 export const EXTRA_OPTIONS = [
   { id: "child_seat", label: "Child seat", perDay: 5, description: "Fitted before pickup" },
   { id: "gps", label: "GPS navigation", perDay: 4, description: "Offline maps included" },
-  { id: "additional_driver", label: "Additional driver", perDay: 7, description: "Second licensed driver" },
+  {
+    id: "additional_driver",
+    label: "Additional driver",
+    perDay: 7,
+    description: "Second licensed driver",
+  },
   { id: "delivery", label: "Vehicle delivery", flat: 25, description: "Delivered to your address" },
 ] as const;
 
