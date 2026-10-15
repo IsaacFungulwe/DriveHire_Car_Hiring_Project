@@ -41,10 +41,10 @@ INSERT INTO public.user_roles (user_id, role)
 SELECT id, 'admin'::public.app_role
 FROM auth.users
 WHERE lower(email) = lower('admin@example.com')
-ON CONFLICT (user_id, role) DO NOTHING;
+ON CONFLICT (user_id) DO UPDATE SET role = EXCLUDED.role;
 ```
 
-The account must exist in Supabase Auth before running the query. Sign out and sign back in after granting the role; the Admin link and dashboard access will then be available. Apply the Supabase migrations to prevent signup requests from assigning themselves the admin role.
+Each account has one role. Promoting an existing account to admin replaces its current role. The account must exist in Supabase Auth before running the query. Sign out and sign back in after granting the role; the Admin link and dashboard access will then be available. Apply all Supabase migrations to enforce the one-role rule and prevent signup requests from assigning themselves the admin role.
 
 ## Start the Development Server
 
