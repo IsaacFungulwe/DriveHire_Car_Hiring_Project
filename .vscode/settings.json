@@ -1,0 +1,8 @@
+{
+    "chat.tools.terminal.autoApprove": {
+        "/^cd /home/isaac-fungulwe/Masiye/DriveHire && bun run lint -- src/routes/auth\\.tsx$/": {
+            "approve": true,
+            "matchCommandLine": true
+        }
+    }
+}

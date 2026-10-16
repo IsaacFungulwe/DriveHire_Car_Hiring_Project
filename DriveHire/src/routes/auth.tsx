@@ -1,5 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -32,6 +33,9 @@ function AuthPage() {
   const { user } = useSession();
   const [busy, setBusy] = useState(false);
   const [accountType, setAccountType] = useState<"customer" | "owner">("customer");
+  const [showSignInPassword, setShowSignInPassword] = useState(false);
+  const [showSignUpPassword, setShowSignUpPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   useEffect(() => {
     if (user) navigate({ to: "/" });
@@ -53,6 +57,10 @@ function AuthPage() {
     e.preventDefault();
     const f = new FormData(e.currentTarget);
     const password = String(f.get("password"));
+    if (password !== String(f.get("confirm_password"))) {
+      toast.error("Passwords do not match.");
+      return;
+    }
     if (password.length < 8) {
       toast.error("Password must be at least 8 characters.");
       return;
@@ -102,7 +110,25 @@ function AuthPage() {
             </div>
             <div>
               <Label htmlFor="p1">Password</Label>
-              <Input id="p1" name="password" type="password" required />
+              <div className="relative">
+                <Input
+                  id="p1"
+                  name="password"
+                  type={showSignInPassword ? "text" : "password"}
+                  className="pr-10"
+                  autoComplete="current-password"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowSignInPassword((show) => !show)}
+                  className="absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground hover:text-foreground"
+                  aria-label={showSignInPassword ? "Hide password" : "Show password"}
+                  aria-pressed={showSignInPassword}
+                >
+                  {showSignInPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
             </div>
             <Button className="w-full" disabled={busy}>
               Sign in
@@ -152,7 +178,53 @@ function AuthPage() {
             </div>
             <div>
               <Label htmlFor="p2">Password</Label>
-              <Input id="p2" name="password" type="password" required minLength={8} />
+              <div className="relative">
+                <Input
+                  id="p2"
+                  name="password"
+                  type={showSignUpPassword ? "text" : "password"}
+                  className="pr-10"
+                  autoComplete="new-password"
+                  required
+                  minLength={8}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowSignUpPassword((show) => !show)}
+                  className="absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground hover:text-foreground"
+                  aria-label={showSignUpPassword ? "Hide password" : "Show password"}
+                  aria-pressed={showSignUpPassword}
+                >
+                  {showSignUpPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
+            </div>
+            <div>
+              <Label htmlFor="p3">Confirm password</Label>
+              <div className="relative">
+                <Input
+                  id="p3"
+                  name="confirm_password"
+                  type={showConfirmPassword ? "text" : "password"}
+                  className="pr-10"
+                  autoComplete="new-password"
+                  required
+                  minLength={8}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword((show) => !show)}
+                  className="absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground hover:text-foreground"
+                  aria-label={
+                    showConfirmPassword
+                      ? "Hide confirmation password"
+                      : "Show confirmation password"
+                  }
+                  aria-pressed={showConfirmPassword}
+                >
+                  {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
             </div>
             <Button className="w-full" disabled={busy}>
               Create account
