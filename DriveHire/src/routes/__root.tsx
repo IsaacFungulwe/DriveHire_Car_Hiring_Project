@@ -119,6 +119,12 @@ function RootShell({ children }: { children: ReactNode }) {
     <html lang="en">
       <head>
         <HeadContent />
+        <script
+          dangerouslySetInnerHTML={{
+            __html:
+              "try { if (localStorage.getItem('drivehire-theme') === 'dark') document.documentElement.classList.add('dark'); } catch (error) { console.error('Failed to read theme preference', error); }",
+          }}
+        />
       </head>
       <body>
         {children}

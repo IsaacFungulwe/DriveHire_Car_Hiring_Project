@@ -7,10 +7,13 @@ import {
   Heart,
   Home,
   LogOut,
+  Moon,
   Shield,
+  Sun,
   User,
 } from "lucide-react";
-import type { ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { useAccount, useSignOut } from "@/lib/auth";
@@ -18,6 +21,23 @@ import { useAccount, useSignOut } from "@/lib/auth";
 export function AppShell({ children }: { children: ReactNode }) {
   const { user, isOwner, isAdmin } = useAccount();
   const signOut = useSignOut();
+  const [isDark, setIsDark] = useState(false);
+  useEffect(() => {
+    setIsDark(document.documentElement.classList.contains("dark"));
+  }, []);
+
+  function toggleTheme() {
+    const nextIsDark = !isDark;
+    document.documentElement.classList.toggle("dark", nextIsDark);
+    setIsDark(nextIsDark);
+    try {
+      localStorage.setItem("drivehire-theme", nextIsDark ? "dark" : "light");
+    } catch (error) {
+      console.error("Failed to save theme preference", error);
+      toast.error("Your theme changed, but the preference could not be saved.");
+    }
+  }
+
   const link =
     "flex items-center gap-2 rounded-full px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground";
   const active = { className: "bg-secondary text-foreground" };
@@ -59,6 +79,15 @@ export function AppShell({ children }: { children: ReactNode }) {
             )}
           </nav>
           <div className="ml-auto flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={toggleTheme}
+              aria-label={`Switch to ${isDark ? "light" : "dark"} mode`}
+              title={`Switch to ${isDark ? "light" : "dark"} mode`}
+            >
+              {isDark ? <Sun /> : <Moon />}
+            </Button>
             {user ? (
               <>
                 <Link
