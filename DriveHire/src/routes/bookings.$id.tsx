@@ -9,6 +9,13 @@ import { StatusBadge } from "@/components/app-shell";
 import { Gate } from "@/components/gate";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { dateTime, money } from "@/lib/format";
@@ -40,6 +47,11 @@ function Detail({ userId }: { userId: string }) {
   const [msg, setMsg] = useState("");
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState("");
+  const [requestType, setRequestType] = useState<"cancellation" | "modification">("cancellation");
+  const [requestMessage, setRequestMessage] = useState("");
+  const [requestedPickup, setRequestedPickup] = useState("");
+  const [requestedReturn, setRequestedReturn] = useState("");
+  const [decisionNote, setDecisionNote] = useState("");
 
   const { data: b } = useQuery({
     queryKey: ["booking", id],
@@ -59,6 +71,22 @@ function Detail({ userId }: { userId: string }) {
     queryFn: async () =>
       (await supabase.from("booking_events").select("*").eq("booking_id", id).order("created_at"))
         .data ?? [],
+  });
+  const {
+    data: changeRequests = [],
+    error: changeRequestsError,
+    isLoading: changeRequestsLoading,
+  } = useQuery({
+    queryKey: ["booking-change-requests", id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("booking_change_requests")
+        .select("*")
+        .eq("booking_id", id)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data;
+    },
   });
   const { data: msgs = [] } = useQuery({
     queryKey: ["msgs", id],
@@ -84,6 +112,9 @@ function Detail({ userId }: { userId: string }) {
   const refresh = () => {
     qc.invalidateQueries({ queryKey: ["booking", id] });
     qc.invalidateQueries({ queryKey: ["events", id] });
+    qc.invalidateQueries({ queryKey: ["booking-change-requests", id] });
+    qc.invalidateQueries({ queryKey: ["my-bookings"] });
+    qc.invalidateQueries({ queryKey: ["co-bookings"] });
   };
   const setStatus = useMutation({
     mutationFn: async (s: string) => {
@@ -93,6 +124,52 @@ function Detail({ userId }: { userId: string }) {
     onSuccess: () => {
       refresh();
       toast.success("Booking updated");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+  const requestChange = useMutation({
+    mutationFn: async () => {
+      if (!requestMessage.trim()) throw new Error("Add a message for the rental company.");
+      if (requestType === "modification" && (!requestedPickup || !requestedReturn)) {
+        throw new Error("Choose the requested pickup and return dates.");
+      }
+      const { error } = await supabase.rpc("request_booking_change", {
+        p_booking_id: id,
+        p_request_type: requestType,
+        p_message: requestMessage.trim(),
+        p_pickup_at:
+          requestType === "modification" ? new Date(requestedPickup).toISOString() : null,
+        p_return_at:
+          requestType === "modification" ? new Date(requestedReturn).toISOString() : null,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      setRequestMessage("");
+      refresh();
+      toast.success("Your request was sent to the rental company.");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+  const decideChange = useMutation({
+    mutationFn: async ({
+      requestId,
+      decision,
+    }: {
+      requestId: string;
+      decision: "approved" | "declined";
+    }) => {
+      const { error } = await supabase.rpc("decide_booking_change", {
+        p_request_id: requestId,
+        p_decision: decision,
+        p_note: decisionNote.trim(),
+      });
+      if (error) throw error;
+    },
+    onSuccess: (_, { decision }) => {
+      setDecisionNote("");
+      refresh();
+      toast.success(decision === "approved" ? "Request approved" : "Request declined");
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -129,6 +206,16 @@ function Detail({ userId }: { userId: string }) {
 
   if (!b) return <p className="p-8 text-muted-foreground">Loading…</p>;
   const isCustomer = b.customer_id === userId;
+  const hasPendingChange = changeRequests.some((r) => r.status === "pending");
+  const statusDescription: Record<string, string> = {
+    pending: "Your request is with the rental company. They will confirm or decline it.",
+    confirmed: "The rental company confirmed your booking. Contact them if your plans change.",
+    ready: "The car is ready for pickup. Show the pickup code to the rental company.",
+    active: "Your rental is in progress. Contact the company if you need assistance.",
+    completed: "This rental is complete. You can leave a review for the car and company.",
+    cancelled: "This booking has been cancelled.",
+    rejected: "The rental company declined this booking request.",
+  };
   const row = (l: string, n: number) => (
     <div className="flex justify-between">
       <span className="text-muted-foreground">{l}</span>
@@ -159,6 +246,9 @@ function Detail({ userId }: { userId: string }) {
             <p className="mt-1 text-xs text-muted-foreground">Payment: {b.payment_status}</p>
           </div>
         </div>
+        <p className="rounded-xl bg-secondary px-4 py-3 text-sm text-secondary-foreground">
+          {statusDescription[b.status] ?? "Your booking status has been updated."}
+        </p>
 
         <section className="grid gap-3 rounded-2xl bg-card p-5 text-sm shadow-[var(--shadow-card)] sm:grid-cols-2">
           <p>
@@ -185,6 +275,9 @@ function Detail({ userId }: { userId: string }) {
         <section className="rounded-2xl bg-card p-5 shadow-[var(--shadow-card)]">
           <h2 className="mb-3 font-bold">Timeline</h2>
           <ol className="space-y-3 border-l-2 border-border pl-4">
+            {events.length === 0 && (
+              <li className="text-sm text-muted-foreground">No booking updates yet.</li>
+            )}
             {events.map((e) => (
               <li key={e.id} className="relative text-sm">
                 <span className="absolute -left-[23px] top-1 h-3 w-3 rounded-full bg-primary" />
@@ -194,6 +287,175 @@ function Detail({ userId }: { userId: string }) {
               </li>
             ))}
           </ol>
+        </section>
+
+        <section className="rounded-2xl bg-card p-5 shadow-[var(--shadow-card)]">
+          <h2 className="mb-3 font-bold">Booking change requests</h2>
+          {changeRequestsError && (
+            <p role="alert" className="mb-3 text-sm text-destructive">
+              Couldn't load booking requests: {changeRequestsError.message}
+            </p>
+          )}
+          {changeRequestsLoading && (
+            <p className="text-sm text-muted-foreground">Loading requests…</p>
+          )}
+          {!changeRequestsLoading && !changeRequestsError && changeRequests.length === 0 && (
+            <p className="text-sm text-muted-foreground">
+              No cancellation or date-change requests.
+            </p>
+          )}
+          <div className="space-y-3">
+            {changeRequests.map((request) => (
+              <article key={request.id} className="rounded-xl border border-border p-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <p className="font-semibold capitalize">
+                    {request.request_type === "cancellation"
+                      ? "Cancellation request"
+                      : "Date change request"}
+                  </p>
+                  <StatusBadge status={request.status} />
+                </div>
+                {request.request_type === "modification" &&
+                  request.requested_pickup_at &&
+                  request.requested_return_at && (
+                    <p className="mt-2 text-sm">
+                      Pickup {dateTime(request.requested_pickup_at)} · Return{" "}
+                      {dateTime(request.requested_return_at)}
+                    </p>
+                  )}
+                <p className="mt-1 whitespace-pre-wrap text-sm text-muted-foreground">
+                  {request.message}
+                </p>
+                {request.decision_note && (
+                  <p className="mt-2 text-sm">
+                    Company note:{" "}
+                    <span className="text-muted-foreground">{request.decision_note}</span>
+                  </p>
+                )}
+                <p className="mt-2 text-xs text-muted-foreground">
+                  Submitted {dateTime(request.created_at)}
+                </p>
+                {!isCustomer && request.status === "pending" && (
+                  <div className="mt-3 space-y-2">
+                    <Textarea
+                      placeholder="Optional note to the customer"
+                      value={decisionNote}
+                      onChange={(e) => setDecisionNote(e.target.value)}
+                    />
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        disabled={decideChange.isPending}
+                        onClick={() =>
+                          decideChange.mutate({ requestId: request.id, decision: "approved" })
+                        }
+                      >
+                        Approve request
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={decideChange.isPending}
+                        onClick={() =>
+                          decideChange.mutate({ requestId: request.id, decision: "declined" })
+                        }
+                      >
+                        Decline
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </article>
+            ))}
+          </div>
+          {isCustomer &&
+            ["pending", "confirmed"].includes(b.status) &&
+            !changeRequestsLoading &&
+            !changeRequestsError && (
+              <div className="mt-4 space-y-3 border-t border-border pt-4">
+                {hasPendingChange ? (
+                  <p className="text-sm text-muted-foreground">
+                    Your request is awaiting a response. You can send another after it is handled.
+                  </p>
+                ) : (
+                  <>
+                    <h3 className="font-semibold">Need to change your plans?</h3>
+                    <Select
+                      value={requestType}
+                      onValueChange={(value) =>
+                        setRequestType(value as "cancellation" | "modification")
+                      }
+                    >
+                      <SelectTrigger aria-label="Request type">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="cancellation">Request cancellation</SelectItem>
+                        <SelectItem value="modification">Request new dates</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    {requestType === "modification" && (
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        <div>
+                          <label
+                            htmlFor="requested-pickup"
+                            className="mb-1 block text-xs text-muted-foreground"
+                          >
+                            Requested pickup
+                          </label>
+                          <Input
+                            id="requested-pickup"
+                            type="datetime-local"
+                            min={new Date().toISOString().slice(0, 16)}
+                            value={requestedPickup}
+                            onChange={(e) => setRequestedPickup(e.target.value)}
+                          />
+                        </div>
+                        <div>
+                          <label
+                            htmlFor="requested-return"
+                            className="mb-1 block text-xs text-muted-foreground"
+                          >
+                            Requested return
+                          </label>
+                          <Input
+                            id="requested-return"
+                            type="datetime-local"
+                            min={requestedPickup || new Date().toISOString().slice(0, 16)}
+                            value={requestedReturn}
+                            onChange={(e) => setRequestedReturn(e.target.value)}
+                          />
+                        </div>
+                        <p className="text-xs text-muted-foreground sm:col-span-2">
+                          If approved, the booking total will be recalculated using the new dates.
+                        </p>
+                      </div>
+                    )}
+                    <Textarea
+                      placeholder={
+                        requestType === "cancellation"
+                          ? "Tell the company why you need to cancel"
+                          : "Add a note about your requested dates"
+                      }
+                      value={requestMessage}
+                      onChange={(e) => setRequestMessage(e.target.value)}
+                      maxLength={1000}
+                    />
+                    <Button
+                      variant={requestType === "cancellation" ? "destructive" : "default"}
+                      disabled={requestChange.isPending || hasPendingChange}
+                      onClick={() => requestChange.mutate()}
+                    >
+                      {requestChange.isPending
+                        ? "Sending request…"
+                        : requestType === "cancellation"
+                          ? "Request cancellation"
+                          : "Request date change"}
+                    </Button>
+                  </>
+                )}
+              </div>
+            )}
         </section>
 
         <section className="rounded-2xl bg-card p-5 shadow-[var(--shadow-card)]">
@@ -289,15 +551,6 @@ function Detail({ userId }: { userId: string }) {
               <Phone className="h-4 w-4" />
               Call company / roadside help
             </a>
-          </Button>
-        )}
-        {isCustomer && ["pending", "confirmed"].includes(b.status) && (
-          <Button
-            variant="destructive"
-            className="w-full"
-            onClick={() => confirm("Cancel this booking?") && setStatus.mutate("cancelled")}
-          >
-            Cancel booking
           </Button>
         )}
         {!isCustomer && <OwnerActions status={b.status} onSet={(s) => setStatus.mutate(s)} />}

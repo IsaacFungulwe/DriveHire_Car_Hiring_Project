@@ -317,20 +317,7 @@ REVOKE ALL ON FUNCTION public.decide_booking_change(uuid, text, text) FROM publi
 GRANT EXECUTE ON FUNCTION public.decide_booking_change(uuid, text, text) TO authenticated, service_role;
 
 DROP POLICY IF EXISTS "bookings updatable by parties" ON public.bookings;
-CREATE POLICY "bookings updatable by company or admin"
-  ON public.bookings FOR UPDATE TO authenticated
-  USING (
-    public.has_role(auth.uid(), 'admin')
-    OR EXISTS (
-      SELECT 1 FROM public.companies c WHERE c.id = company_id AND c.owner_id = auth.uid()
-    )
-  )
-  WITH CHECK (
-    public.has_role(auth.uid(), 'admin')
-    OR EXISTS (
-      SELECT 1 FROM public.companies c WHERE c.id = company_id AND c.owner_id = auth.uid()
-    )
-  );
+REVOKE UPDATE ON public.bookings FROM authenticated;
 
 CREATE OR REPLACE FUNCTION public.set_booking_status(p_booking_id uuid, p_status text, p_note text DEFAULT NULL)
 RETURNS public.bookings

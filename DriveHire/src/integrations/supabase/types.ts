@@ -64,6 +64,53 @@ export type Database = {
           },
         ];
       };
+      booking_change_requests: {
+        Row: {
+          booking_id: string;
+          created_at: string;
+          decision_note: string | null;
+          id: string;
+          message: string;
+          requested_pickup_at: string | null;
+          requested_return_at: string | null;
+          request_type: string;
+          status: string;
+          updated_at: string;
+        };
+        Insert: {
+          booking_id: string;
+          created_at?: string;
+          decision_note?: string | null;
+          id?: string;
+          message: string;
+          requested_pickup_at?: string | null;
+          requested_return_at?: string | null;
+          request_type: string;
+          status?: string;
+          updated_at?: string;
+        };
+        Update: {
+          booking_id?: string;
+          created_at?: string;
+          decision_note?: string | null;
+          id?: string;
+          message?: string;
+          requested_pickup_at?: string | null;
+          requested_return_at?: string | null;
+          request_type?: string;
+          status?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "booking_change_requests_booking_id_fkey";
+            columns: ["booking_id"];
+            isOneToOne: false;
+            referencedRelation: "bookings";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       bookings: {
         Row: {
           company_id: string;
@@ -516,6 +563,27 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      decide_booking_change: {
+        Args: { p_decision: string; p_note: string; p_request_id: string };
+        Returns: {
+          booking_id: string;
+          created_at: string;
+          decision_note: string | null;
+          id: string;
+          message: string;
+          requested_pickup_at: string | null;
+          requested_return_at: string | null;
+          request_type: string;
+          status: string;
+          updated_at: string;
+        };
+        SetofOptions: {
+          from: "*";
+          to: "booking_change_requests";
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
+      };
       create_booking: {
         Args: {
           p_extras: string[];
@@ -564,6 +632,51 @@ export type Database = {
           _user_id: string;
         };
         Returns: boolean;
+      };
+      request_booking_change: {
+        Args: {
+          p_booking_id: string;
+          p_message: string;
+          p_pickup_at: string | null;
+          p_request_type: string;
+          p_return_at: string | null;
+        };
+        Returns: {
+          booking_id: string;
+          created_at: string;
+          decision_note: string | null;
+          id: string;
+          message: string;
+          requested_pickup_at: string | null;
+          requested_return_at: string | null;
+          request_type: string;
+          status: string;
+          updated_at: string;
+        };
+        SetofOptions: {
+          from: "*";
+          to: "booking_change_requests";
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
+      };
+      search_available_vehicles: {
+        Args: {
+          p_air_conditioning?: boolean;
+          p_city?: string;
+          p_fuel_type?: string;
+          p_limit?: number;
+          p_max_price?: number;
+          p_min_seats?: number;
+          p_offset?: number;
+          p_pickup_at?: string;
+          p_query?: string;
+          p_return_at?: string;
+          p_sort?: string;
+          p_transmission?: string;
+          p_vehicle_type?: string;
+        };
+        Returns: { total_count: number; vehicle_id: string }[];
       };
       set_booking_status: {
         Args: { p_booking_id: string; p_note?: string; p_status: string };

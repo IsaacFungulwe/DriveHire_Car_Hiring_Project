@@ -23,8 +23,14 @@ import { VehicleImage } from "@/lib/vehicle-image";
 
 export const Route = createFileRoute("/cars/$id")({
   validateSearch: z.object({
-    pickup: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
-    return: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+    pickup: z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/)
+      .optional(),
+    return: z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/)
+      .optional(),
   }),
   head: () => ({
     meta: [

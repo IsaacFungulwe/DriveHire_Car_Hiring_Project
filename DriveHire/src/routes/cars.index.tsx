@@ -18,7 +18,10 @@ import { VehicleCard, type VehicleWithCompany } from "@/components/vehicle-card"
 import { supabase } from "@/integrations/supabase/client";
 
 const PAGE_SIZE = 12;
-const dateParam = z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional();
+const dateParam = z
+  .string()
+  .regex(/^\d{4}-\d{2}-\d{2}$/)
+  .optional();
 const search = z.object({
   city: z.string().optional(),
   type: z.string().optional(),
@@ -35,13 +38,9 @@ const search = z.object({
 });
 
 function dateAtTenLocal(date: string) {
-  const [year, month, day] = date.split("-").map(Number);
+  const [year = NaN, month = NaN, day = NaN] = date.split("-").map(Number);
   const value = new Date(year, month - 1, day, 10);
-  if (
-    value.getFullYear() !== year ||
-    value.getMonth() !== month - 1 ||
-    value.getDate() !== day
-  ) {
+  if (value.getFullYear() !== year || value.getMonth() !== month - 1 || value.getDate() !== day) {
     return null;
   }
   return value;
@@ -61,7 +60,10 @@ export const Route = createFileRoute("/cars/")({
   head: () => ({
     meta: [
       { title: "Browse rental cars — DriveHire" },
-      { name: "description", content: "Filter available rental cars by dates, city, features and price." },
+      {
+        name: "description",
+        content: "Filter available rental cars by dates, city, features and price.",
+      },
       { property: "og:title", content: "Browse rental cars — DriveHire" },
       {
         property: "og:description",
@@ -82,10 +84,7 @@ function Cars() {
   const invalidDates =
     hasPartialDates ||
     (Boolean(s.pickup && s.return) &&
-      (!pickupDate ||
-        !returnDate ||
-        s.pickup! < today ||
-        s.return! <= s.pickup!));
+      (!pickupDate || !returnDate || s.pickup! < today || s.return! <= s.pickup!));
 
   const set = (patch: Partial<z.infer<typeof search>>, resetPage = true) =>
     navigate({
@@ -97,24 +96,21 @@ function Cars() {
     queryKey: ["cars", s],
     enabled: !invalidDates,
     queryFn: async () => {
-      const { data: rows, error: searchError } = await supabase.rpc(
-        "search_available_vehicles",
-        {
-          p_city: s.city ?? null,
-          p_pickup_at: pickupDate?.toISOString() ?? null,
-          p_return_at: returnDate?.toISOString() ?? null,
-          p_vehicle_type: s.type ?? null,
-          p_transmission: s.transmission ?? null,
-          p_max_price: s.max ?? null,
-          p_min_seats: s.seats ?? null,
-          p_fuel_type: s.fuel ?? null,
-          p_air_conditioning: s.ac ?? false,
-          p_query: s.q ?? null,
-          p_sort: s.sort ?? "rating",
-          p_limit: PAGE_SIZE,
-          p_offset: (page - 1) * PAGE_SIZE,
-        },
-      );
+      const { data: rows, error: searchError } = await supabase.rpc("search_available_vehicles", {
+        ...(s.city ? { p_city: s.city } : {}),
+        ...(pickupDate ? { p_pickup_at: pickupDate.toISOString() } : {}),
+        ...(returnDate ? { p_return_at: returnDate.toISOString() } : {}),
+        ...(s.type ? { p_vehicle_type: s.type } : {}),
+        ...(s.transmission ? { p_transmission: s.transmission } : {}),
+        ...(s.max ? { p_max_price: s.max } : {}),
+        ...(s.seats ? { p_min_seats: s.seats } : {}),
+        ...(s.fuel ? { p_fuel_type: s.fuel } : {}),
+        ...(s.ac ? { p_air_conditioning: true } : {}),
+        ...(s.q ? { p_query: s.q } : {}),
+        p_sort: s.sort ?? "rating",
+        p_limit: PAGE_SIZE,
+        p_offset: (page - 1) * PAGE_SIZE,
+      });
       if (searchError) throw searchError;
       const ids = rows.map((row) => row.vehicle_id);
       if (ids.length === 0) return { cars: [] as VehicleWithCompany[], total: 0 };
@@ -127,7 +123,7 @@ function Cars() {
       const byId = new Map((cars as VehicleWithCompany[]).map((car) => [car.id, car]));
       return {
         cars: ids.map((id) => byId.get(id)).filter((car): car is VehicleWithCompany => !!car),
-        total: Number(rows[0].total_count),
+        total: Number(rows[0]?.total_count ?? 0),
       };
     },
   });
@@ -146,7 +142,7 @@ function Cars() {
             : "Search verified rental cars"
         }
       />
-      <div className="mb-6 grid gap-3 rounded-2xl bg-card p-4 shadow-[var(--shadow-card)] sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mb-6 grid gap-3 rounded-2xl bg-card p-4 shadow-(--shadow-card) sm:grid-cols-2 lg:grid-cols-4">
         <Input
           placeholder="Search brand or model"
           value={s.q ?? ""}
@@ -158,7 +154,10 @@ function Cars() {
           onChange={(e) => set({ city: e.target.value || undefined })}
         />
         <div>
-          <label htmlFor="pickup-date" className="mb-1 block text-xs font-medium text-muted-foreground">
+          <label
+            htmlFor="pickup-date"
+            className="mb-1 block text-xs font-medium text-muted-foreground"
+          >
             Pickup date (10:00)
           </label>
           <Input
@@ -170,7 +169,10 @@ function Cars() {
           />
         </div>
         <div>
-          <label htmlFor="return-date" className="mb-1 block text-xs font-medium text-muted-foreground">
+          <label
+            htmlFor="return-date"
+            className="mb-1 block text-xs font-medium text-muted-foreground"
+          >
             Return date (10:00)
           </label>
           <Input
@@ -210,10 +212,7 @@ function Cars() {
             ))}
           </SelectContent>
         </Select>
-        <Select
-          value={s.fuel ?? "all"}
-          onValueChange={(v) => set({ fuel: setOptional(v) })}
-        >
+        <Select value={s.fuel ?? "all"} onValueChange={(v) => set({ fuel: setOptional(v) })}>
           <SelectTrigger aria-label="Fuel type">
             <SelectValue placeholder="Any fuel" />
           </SelectTrigger>
@@ -227,15 +226,13 @@ function Cars() {
         </Select>
         <Select
           value={s.seats ? String(s.seats) : "all"}
-          onValueChange={(v) =>
-            set({ seats: v === "all" ? undefined : Number(v) })
-          }
+          onValueChange={(v) => set({ seats: v === "all" ? undefined : Number(v) })}
         >
           <SelectTrigger aria-label="Minimum seats">
             <SelectValue placeholder="Any seats" />
           </SelectTrigger>
           <SelectContent>
-            {["all", "2", "4", "5", "7", "8"].map((seats) => (
+            {["all", "2", "4", "5", "6", "7", "8"].map((seats) => (
               <SelectItem key={seats} value={seats}>
                 {seats === "all" ? "Any number of seats" : `${seats}+ seats`}
               </SelectItem>
@@ -267,7 +264,10 @@ function Cars() {
           </SelectContent>
         </Select>
         <label className="flex min-h-9 items-center gap-2 text-sm">
-          <Checkbox checked={s.ac ?? false} onCheckedChange={(checked) => set({ ac: !!checked || undefined })} />
+          <Checkbox
+            checked={s.ac ?? false}
+            onCheckedChange={(checked) => set({ ac: !!checked || undefined })}
+          />
           Air conditioning
         </label>
       </div>
@@ -297,7 +297,13 @@ function Cars() {
         <>
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {cars.map((v) => (
-              <VehicleCard key={v.id} v={v} search={{ pickup: s.pickup, return: s.return }} />
+              <VehicleCard
+                key={v.id}
+                v={v}
+                {...(s.pickup && s.return
+                  ? { search: { pickup: s.pickup, return: s.return } }
+                  : {})}
+              />
             ))}
           </div>
           {pageCount > 1 && (

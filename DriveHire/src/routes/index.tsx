@@ -79,7 +79,7 @@ function Home() {
                 },
               });
             }}
-            className="mt-8 grid max-w-3xl gap-2 rounded-2xl bg-card p-2 shadow-[var(--shadow-lift)] sm:grid-cols-[1.2fr_1.3fr_auto]"
+            className="mt-8 grid max-w-3xl gap-2 rounded-2xl bg-card p-2 shadow-(--shadow-lift) sm:grid-cols-[1.2fr_1.3fr_auto]"
           >
             <div className="flex flex-1 items-center gap-2 px-3 text-foreground">
               <MapPin className="h-5 w-5 text-muted-foreground" />
@@ -161,7 +161,7 @@ function Home() {
           { icon: CalendarClock, t: "Live availability", d: "Double bookings are impossible." },
           { icon: ShieldCheck, t: "Insurance included", d: "Basic cover on every rental." },
         ].map((f) => (
-          <div key={f.t} className="rounded-2xl bg-card p-5 shadow-[var(--shadow-card)]">
+          <div key={f.t} className="rounded-2xl bg-card p-5 shadow-(--shadow-card)">
             <f.icon className="h-6 w-6 text-accent" />
             <h3 className="mt-3 font-bold">{f.t}</h3>
             <p className="mt-1 text-sm text-muted-foreground">{f.d}</p>
