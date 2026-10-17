@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { Fuel, Settings2, Star, Users } from "lucide-react";
+import { Fuel, Settings2, Snowflake, Star, Users } from "lucide-react";
 
 import type { Tables } from "@/integrations/supabase/types";
 import { moneyShort } from "@/lib/format";
@@ -20,7 +20,7 @@ export function VehicleCard({
     <Link
       to="/cars/$id"
       params={{ id: v.id }}
-      search={search}
+      {...(search ? { search } : {})}
       className="group overflow-hidden rounded-2xl bg-card shadow-[var(--shadow-card)] transition hover:shadow-[var(--shadow-lift)]"
     >
       <div className="aspect-[3/2] overflow-hidden bg-muted">
@@ -59,6 +59,12 @@ export function VehicleCard({
             <Fuel className="h-3.5 w-3.5" />
             {v.fuel_type}
           </span>
+          {v.features.some((feature) => feature.toLowerCase() === "air conditioning") && (
+            <span className="flex items-center gap-1" title="Air conditioning">
+              <Snowflake className="h-3.5 w-3.5" />
+              A/C
+            </span>
+          )}
         </div>
         <div className="mt-4 flex items-end justify-between">
           <p>

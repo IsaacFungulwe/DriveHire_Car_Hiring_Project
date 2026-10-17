@@ -174,6 +174,18 @@ export function PageHeader({
 }
 
 export function StatusBadge({ status }: { status: string }) {
+  const label: Record<string, string> = {
+    pending: "Awaiting confirmation",
+    confirmed: "Confirmed",
+    ready: "Ready for pickup",
+    active: "On trip",
+    completed: "Completed",
+    cancelled: "Cancelled",
+    rejected: "Declined",
+    approved: "Approved",
+    paid: "Paid",
+    refunded: "Refunded",
+  };
   const tone: Record<string, string> = {
     pending: "bg-warning/15 text-warning-foreground",
     confirmed: "bg-primary/10 text-primary",
@@ -188,9 +200,10 @@ export function StatusBadge({ status }: { status: string }) {
   };
   return (
     <span
-      className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold capitalize ${tone[status] ?? "bg-muted text-muted-foreground"}`}
+      title={label[status] ?? status}
+      className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ${tone[status] ?? "bg-muted text-muted-foreground"}`}
     >
-      {status}
+      {label[status] ?? status}
     </span>
   );
 }

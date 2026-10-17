@@ -2,19 +2,19 @@ CREATE INDEX bookings_vehicle_status_dates_idx
   ON public.bookings (vehicle_id, status, pickup_at, return_at);
 
 CREATE OR REPLACE FUNCTION public.search_available_vehicles(
-  p_city text,
-  p_pickup_at timestamptz,
-  p_return_at timestamptz,
-  p_vehicle_type text,
-  p_transmission text,
-  p_max_price numeric,
-  p_min_seats integer,
-  p_fuel_type text,
-  p_air_conditioning boolean,
-  p_query text,
-  p_sort text,
-  p_limit integer,
-  p_offset integer
+  p_city text DEFAULT NULL,
+  p_pickup_at timestamptz DEFAULT NULL,
+  p_return_at timestamptz DEFAULT NULL,
+  p_vehicle_type text DEFAULT NULL,
+  p_transmission text DEFAULT NULL,
+  p_max_price numeric DEFAULT NULL,
+  p_min_seats integer DEFAULT NULL,
+  p_fuel_type text DEFAULT NULL,
+  p_air_conditioning boolean DEFAULT false,
+  p_query text DEFAULT NULL,
+  p_sort text DEFAULT NULL,
+  p_limit integer DEFAULT 12,
+  p_offset integer DEFAULT 0
 )
 RETURNS TABLE (vehicle_id uuid, total_count bigint)
 LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = public AS $$
@@ -44,8 +44,8 @@ BEGIN
     AND (
       NOT COALESCE(p_air_conditioning, false)
       OR EXISTS (
-        SELECT 1 FROM unnest(v.features) feature
-        WHERE lower(feature) = 'air conditioning'
+        SELECT 1 FROM unnest(v.features) AS f(feature)
+        WHERE lower(f.feature) = 'air conditioning'
       )
     )
     AND (
