@@ -3,6 +3,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { CreditCard, ShieldCheck } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
+import { z } from "zod";
 
 import { PageHeader } from "@/components/app-shell";
 import { Gate } from "@/components/gate";
@@ -16,6 +17,10 @@ import { EXTRA_OPTIONS, quote } from "@/lib/pricing";
 import { VehicleImage } from "@/lib/vehicle-image";
 
 export const Route = createFileRoute("/book/$id")({
+  validateSearch: z.object({
+    pickup: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+    return: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  }),
   head: () => ({
     meta: [
       { title: "Book your car — DriveHire" },
@@ -29,12 +34,15 @@ export const Route = createFileRoute("/book/$id")({
 
 function BookPage() {
   const { id } = Route.useParams();
+  const search = Route.useSearch();
   const navigate = useNavigate();
   const tomorrow = new Date(Date.now() + 86400000);
   tomorrow.setHours(10, 0, 0, 0);
   const later = new Date(tomorrow.getTime() + 3 * 86400000);
-  const [pickupAt, setPickupAt] = useState(toLocalInput(tomorrow));
-  const [returnAt, setReturnAt] = useState(toLocalInput(later));
+  const pickupDefault = search.pickup ? new Date(`${search.pickup}T10:00:00`) : tomorrow;
+  const returnDefault = search.return ? new Date(`${search.return}T10:00:00`) : later;
+  const [pickupAt, setPickupAt] = useState(toLocalInput(pickupDefault));
+  const [returnAt, setReturnAt] = useState(toLocalInput(returnDefault));
   const [pickupLoc, setPickupLoc] = useState("");
   const [returnLoc, setReturnLoc] = useState("");
   const [extras, setExtras] = useState<string[]>([]);

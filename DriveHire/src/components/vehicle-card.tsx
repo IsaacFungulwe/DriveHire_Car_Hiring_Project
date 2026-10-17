@@ -9,11 +9,18 @@ export type VehicleWithCompany = Tables<"vehicles"> & {
   companies?: { name: string; is_verified: boolean } | null;
 };
 
-export function VehicleCard({ v }: { v: VehicleWithCompany }) {
+export function VehicleCard({
+  v,
+  search,
+}: {
+  v: VehicleWithCompany;
+  search?: { pickup?: string; return?: string };
+}) {
   return (
     <Link
       to="/cars/$id"
       params={{ id: v.id }}
+      search={search}
       className="group overflow-hidden rounded-2xl bg-card shadow-[var(--shadow-card)] transition hover:shadow-[var(--shadow-lift)]"
     >
       <div className="aspect-[3/2] overflow-hidden bg-muted">

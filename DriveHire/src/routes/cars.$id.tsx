@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { z } from "zod";
 import {
   BadgeCheck,
   CalendarDays,
@@ -21,6 +22,10 @@ import { dateOnly, money } from "@/lib/format";
 import { VehicleImage } from "@/lib/vehicle-image";
 
 export const Route = createFileRoute("/cars/$id")({
+  validateSearch: z.object({
+    pickup: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+    return: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  }),
   head: () => ({
     meta: [
       { title: "Car details — DriveHire" },
@@ -40,6 +45,7 @@ export const Route = createFileRoute("/cars/$id")({
 
 function CarDetail() {
   const { id } = Route.useParams();
+  const search = Route.useSearch();
   const { user } = useAccount();
   const qc = useQueryClient();
 
@@ -218,7 +224,7 @@ function CarDetail() {
             <p className="text-sm text-muted-foreground">Refundable deposit {money(v.deposit)}</p>
             <Button asChild size="lg" className="mt-6 w-full rounded-xl" disabled={!v.is_available}>
               {user ? (
-                <Link to="/book/$id" params={{ id: v.id }}>
+                <Link to="/book/$id" params={{ id: v.id }} search={search}>
                   Choose dates & book
                 </Link>
               ) : (

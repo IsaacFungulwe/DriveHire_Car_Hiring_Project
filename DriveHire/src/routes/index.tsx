@@ -33,6 +33,8 @@ const TYPES = ["Sedan", "SUV", "Hatchback", "Luxury"];
 function Home() {
   const navigate = useNavigate();
   const [city, setCity] = useState("");
+  const [pickup, setPickup] = useState("");
+  const [returnDate, setReturnDate] = useState("");
   const { data: cars = [] } = useQuery({
     queryKey: ["popular"],
     queryFn: async () => {
@@ -68,9 +70,16 @@ function Home() {
           <form
             onSubmit={(e) => {
               e.preventDefault();
-              navigate({ to: "/cars", search: { city: city || undefined } });
+              navigate({
+                to: "/cars",
+                search: {
+                  city: city || undefined,
+                  pickup: pickup || undefined,
+                  return: returnDate || undefined,
+                },
+              });
             }}
-            className="mt-8 flex max-w-xl gap-2 rounded-2xl bg-card p-2 shadow-[var(--shadow-lift)]"
+            className="mt-8 grid max-w-3xl gap-2 rounded-2xl bg-card p-2 shadow-[var(--shadow-lift)] sm:grid-cols-[1.2fr_1.3fr_auto]"
           >
             <div className="flex flex-1 items-center gap-2 px-3 text-foreground">
               <MapPin className="h-5 w-5 text-muted-foreground" />
@@ -79,6 +88,32 @@ function Home() {
                 onChange={(e) => setCity(e.target.value)}
                 placeholder="Pickup city, e.g. Lusaka"
                 className="border-0 shadow-none focus-visible:ring-0"
+              />
+            </div>
+            <div className="grid flex-1 grid-cols-2 gap-2">
+              <label className="sr-only" htmlFor="home-pickup">
+                Pickup date
+              </label>
+              <Input
+                id="home-pickup"
+                type="date"
+                min={localDateString(new Date())}
+                value={pickup}
+                onChange={(e) => setPickup(e.target.value)}
+                aria-label="Pickup date"
+                required
+              />
+              <label className="sr-only" htmlFor="home-return">
+                Return date
+              </label>
+              <Input
+                id="home-return"
+                type="date"
+                min={pickup || localDateString(new Date())}
+                value={returnDate}
+                onChange={(e) => setReturnDate(e.target.value)}
+                aria-label="Return date"
+                required
               />
             </div>
             <Button type="submit" size="lg" className="rounded-xl">
@@ -135,4 +170,11 @@ function Home() {
       </section>
     </>
   );
+}
+
+function localDateString(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
 }
