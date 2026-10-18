@@ -46,7 +46,7 @@ ON CONFLICT (user_id) DO UPDATE SET role = EXCLUDED.role;
 
 Each account has one role. Promoting an existing account to admin replaces its current role. The account must exist in Supabase Auth before running the query. Sign out and sign back in after granting the role; the Admin link and dashboard access will then be available. Apply all Supabase migrations to enforce the one-role rule and prevent signup requests from assigning themselves the admin role.
 
-Apply all migrations in `supabase/migrations/` before deploying. The latest migration adds date-aware car availability search and the server-side workflow for customer cancellation and date-change requests.
+Apply all migrations in `supabase/migrations/` before deploying. The latest migrations add date-aware car availability search, server-side booking change requests, verified completed-trip reviews and company ratings. Company owners also have an availability calendar, booking-value reports with CSV export, and fleet listing controls.
 
 ## Start the Development Server
 

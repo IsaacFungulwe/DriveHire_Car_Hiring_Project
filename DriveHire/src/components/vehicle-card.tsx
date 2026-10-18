@@ -6,15 +6,24 @@ import { moneyShort } from "@/lib/format";
 import { VehicleImage } from "@/lib/vehicle-image";
 
 export type VehicleWithCompany = Tables<"vehicles"> & {
-  companies?: { name: string; is_verified: boolean } | null;
+  companies?: {
+    name: string;
+    is_verified: boolean;
+    rating?: number;
+    review_count?: number;
+  } | null;
 };
+
+type RecentReview = Pick<Tables<"reviews">, "rating" | "company_rating" | "comment" | "created_at">;
 
 export function VehicleCard({
   v,
   search,
+  recentReview,
 }: {
   v: VehicleWithCompany;
   search?: { pickup?: string; return?: string };
+  recentReview?: RecentReview;
 }) {
   return (
     <Link
@@ -41,9 +50,13 @@ export function VehicleCard({
               {v.year} · {v.vehicle_type} · {v.city}
             </p>
           </div>
-          <span className="flex items-center gap-1 text-sm font-semibold">
+          <span
+            className="flex items-center gap-1 text-sm font-semibold"
+            aria-label={`${Number(v.rating).toFixed(1)} out of 5 from ${v.review_count} reviews`}
+          >
             <Star className="h-4 w-4 fill-warning text-warning" />
             {Number(v.rating).toFixed(1)}
+            <span className="text-xs font-normal text-muted-foreground">({v.review_count})</span>
           </span>
         </div>
         <div className="mt-3 flex gap-3 text-xs text-muted-foreground">
@@ -66,6 +79,12 @@ export function VehicleCard({
             </span>
           )}
         </div>
+        {recentReview?.comment && (
+          <p className="mt-3 line-clamp-2 border-t border-border pt-3 text-xs text-muted-foreground">
+            <span className="font-semibold text-foreground">Recent renter:</span>{" "}
+            {recentReview.comment}
+          </p>
+        )}
         <div className="mt-4 flex items-end justify-between">
           <p>
             <span className="text-xl font-extrabold text-foreground">
@@ -74,7 +93,15 @@ export function VehicleCard({
             <span className="text-xs text-muted-foreground"> / day</span>
           </p>
           {v.companies?.name && (
-            <p className="max-w-[50%] truncate text-xs text-muted-foreground">{v.companies.name}</p>
+            <div className="max-w-[50%] text-right">
+              <p className="truncate text-xs text-muted-foreground">{v.companies.name}</p>
+              {v.companies.review_count ? (
+                <p className="flex items-center justify-end gap-1 text-xs text-muted-foreground">
+                  <Star className="h-3 w-3 fill-warning text-warning" />
+                  {Number(v.companies.rating).toFixed(1)} company
+                </p>
+              ) : null}
+            </div>
           )}
         </div>
       </div>

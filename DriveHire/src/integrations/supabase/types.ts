@@ -217,6 +217,8 @@ export type Database = {
           name: string;
           owner_id: string | null;
           phone: string | null;
+          rating: number;
+          review_count: number;
         };
         Insert: {
           address?: string | null;
@@ -230,6 +232,8 @@ export type Database = {
           name: string;
           owner_id?: string | null;
           phone?: string | null;
+          rating?: number;
+          review_count?: number;
         };
         Update: {
           address?: string | null;
@@ -243,6 +247,8 @@ export type Database = {
           name?: string;
           owner_id?: string | null;
           phone?: string | null;
+          rating?: number;
+          review_count?: number;
         };
         Relationships: [];
       };
@@ -632,6 +638,16 @@ export type Database = {
           _user_id: string;
         };
         Returns: boolean;
+      };
+      recent_vehicle_reviews: {
+        Args: { p_vehicle_ids: string[] };
+        Returns: {
+          comment: string;
+          company_rating: number | null;
+          created_at: string;
+          rating: number;
+          vehicle_id: string;
+        }[];
       };
       request_booking_change: {
         Args: {

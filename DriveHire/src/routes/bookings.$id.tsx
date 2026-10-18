@@ -46,6 +46,7 @@ function Detail({ userId }: { userId: string }) {
   const [qr, setQr] = useState("");
   const [msg, setMsg] = useState("");
   const [rating, setRating] = useState(5);
+  const [companyRating, setCompanyRating] = useState(5);
   const [comment, setComment] = useState("");
   const [requestType, setRequestType] = useState<"cancellation" | "modification">("cancellation");
   const [requestMessage, setRequestMessage] = useState("");
@@ -95,10 +96,21 @@ function Detail({ userId }: { userId: string }) {
       (await supabase.from("messages").select("*").eq("booking_id", id).order("created_at")).data ??
       [],
   });
-  const { data: review } = useQuery({
+  const {
+    data: review,
+    error: reviewError,
+    isLoading: reviewLoading,
+  } = useQuery({
     queryKey: ["review", id],
-    queryFn: async () =>
-      (await supabase.from("reviews").select("*").eq("booking_id", id).maybeSingle()).data,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("reviews")
+        .select("*")
+        .eq("booking_id", id)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
   });
 
   useEffect(() => {
@@ -193,12 +205,17 @@ function Detail({ userId }: { userId: string }) {
         vehicle_id: b!.vehicle_id,
         customer_id: userId,
         rating,
+        company_rating: companyRating,
         comment: comment || null,
       });
       if (error) throw error;
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["review", id] });
+      qc.invalidateQueries({ queryKey: ["reviews", b!.vehicle_id] });
+      qc.invalidateQueries({ queryKey: ["car", b!.vehicle_id] });
+      qc.invalidateQueries({ queryKey: ["cars"] });
+      qc.invalidateQueries({ queryKey: ["popular"] });
       toast.success("Thanks for your review!");
     },
     onError: (e: Error) => toast.error(e.message),
@@ -492,30 +509,64 @@ function Detail({ userId }: { userId: string }) {
         {isCustomer && b.status === "completed" && (
           <section className="rounded-2xl bg-card p-5 shadow-[var(--shadow-card)]">
             <h2 className="mb-3 font-bold">Rate your rental</h2>
+            {reviewError && (
+              <p role="alert" className="mb-3 text-sm text-destructive">
+                Couldn't check your existing review: {reviewError.message}
+              </p>
+            )}
+            {reviewLoading && <p className="text-sm text-muted-foreground">Checking reviews…</p>}
             {review ? (
-              <p className="text-sm">You rated this {review.rating}/5. Thank you!</p>
-            ) : (
+              <div className="space-y-1 text-sm">
+                <p>You rated the car {review.rating}/5.</p>
+                {review.company_rating && <p>You rated the company {review.company_rating}/5.</p>}
+                <p className="text-muted-foreground">Thank you for sharing your verified review.</p>
+              </div>
+            ) : !reviewLoading && !reviewError ? (
               <>
-                <div className="flex gap-1">
+                <label className="block text-sm font-medium">Rate the car</label>
+                <div className="flex gap-1" role="group" aria-label="Rate the car">
                   {[1, 2, 3, 4, 5].map((n) => (
-                    <button key={n} onClick={() => setRating(n)} aria-label={`${n} stars`}>
+                    <button
+                      key={n}
+                      type="button"
+                      onClick={() => setRating(n)}
+                      aria-label={`${n} out of 5 stars for the car`}
+                      aria-pressed={rating === n}
+                    >
                       <Star
                         className={`h-7 w-7 ${n <= rating ? "fill-warning text-warning" : "text-border"}`}
                       />
                     </button>
                   ))}
                 </div>
+                <label className="mt-3 block text-sm font-medium">Rate the rental company</label>
+                <div className="flex gap-1" role="group" aria-label="Rate the rental company">
+                  {[1, 2, 3, 4, 5].map((n) => (
+                    <button
+                      key={n}
+                      type="button"
+                      onClick={() => setCompanyRating(n)}
+                      aria-label={`${n} out of 5 stars for the rental company`}
+                      aria-pressed={companyRating === n}
+                    >
+                      <Star
+                        className={`h-7 w-7 ${n <= companyRating ? "fill-warning text-warning" : "text-border"}`}
+                      />
+                    </button>
+                  ))}
+                </div>
                 <Textarea
                   className="mt-3"
-                  placeholder="How was the car and service?"
+                  placeholder="Share a few details about the car and your rental experience"
                   value={comment}
                   onChange={(e) => setComment(e.target.value)}
+                  maxLength={2000}
                 />
                 <Button className="mt-3" onClick={() => rate.mutate()} disabled={rate.isPending}>
                   Submit review
                 </Button>
               </>
-            )}
+            ) : null}
           </section>
         )}
       </div>

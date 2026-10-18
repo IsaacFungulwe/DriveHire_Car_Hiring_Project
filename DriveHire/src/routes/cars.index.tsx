@@ -15,6 +15,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { VehicleCard, type VehicleWithCompany } from "@/components/vehicle-card";
+
+type RecentReview = {
+  vehicle_id: string;
+  rating: number;
+  company_rating: number | null;
+  comment: string | null;
+  created_at: string;
+};
 import { supabase } from "@/integrations/supabase/client";
 
 const PAGE_SIZE = 12;
@@ -117,7 +125,7 @@ function Cars() {
 
       const { data: cars, error: carsError } = await supabase
         .from("vehicles")
-        .select("*, companies(name,is_verified)")
+        .select("*, companies(name,is_verified,rating,review_count)")
         .in("id", ids);
       if (carsError) throw carsError;
       const byId = new Map((cars as VehicleWithCompany[]).map((car) => [car.id, car]));
@@ -127,6 +135,26 @@ function Cars() {
       };
     },
   });
+  const { data: recentReviews = new Map<string, RecentReview>(), error: recentReviewsError } =
+    useQuery({
+      queryKey: ["recent-car-reviews", data?.cars.map((car) => car.id)],
+      enabled: Boolean(data?.cars.length),
+      queryFn: async () => {
+        const ids = data?.cars.map((car) => car.id) ?? [];
+        const { data: reviews, error: reviewsError } = await supabase.rpc(
+          "recent_vehicle_reviews",
+          { p_vehicle_ids: ids },
+        );
+        if (reviewsError) throw reviewsError;
+        const firstReviewByVehicle = new Map<string, RecentReview>();
+        for (const review of reviews) {
+          if (!firstReviewByVehicle.has(review.vehicle_id)) {
+            firstReviewByVehicle.set(review.vehicle_id, review);
+          }
+        }
+        return firstReviewByVehicle;
+      },
+    });
 
   const cars = data?.cars ?? [];
   const pageCount = useMemo(() => Math.ceil((data?.total ?? 0) / PAGE_SIZE), [data?.total]);
@@ -284,6 +312,11 @@ function Cars() {
           We couldn't load cars: {error.message}
         </p>
       )}
+      {recentReviewsError && (
+        <p role="alert" className="mb-4 text-sm text-destructive">
+          Car results loaded, but recent reviews couldn't be loaded: {recentReviewsError.message}
+        </p>
+      )}
       {isLoading ? (
         <p className="text-muted-foreground">Checking availability…</p>
       ) : cars.length === 0 ? (
@@ -300,6 +333,7 @@ function Cars() {
               <VehicleCard
                 key={v.id}
                 v={v}
+                recentReview={recentReviews.get(v.id)}
                 {...(s.pickup && s.return
                   ? { search: { pickup: s.pickup, return: s.return } }
                   : {})}

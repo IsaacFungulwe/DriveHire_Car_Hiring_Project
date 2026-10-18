@@ -60,13 +60,17 @@ function CarDetail() {
     queryFn: async () => {
       const { data } = await supabase
         .from("vehicles")
-        .select("*, companies(name,is_verified,city,phone)")
+        .select("*, companies(name,is_verified,city,phone,rating,review_count)")
         .eq("id", id)
         .maybeSingle();
       return data;
     },
   });
-  const { data: reviews = [] } = useQuery({
+  const {
+    data: reviews = [],
+    error: reviewsError,
+    isLoading: reviewsLoading,
+  } = useQuery({
     queryKey: ["reviews", id],
     queryFn: async () =>
       (
@@ -174,9 +178,15 @@ function CarDetail() {
               <span className="font-semibold">Last service:</span> {dateOnly(v.last_maintenance)}
             </p>
           </div>
-          <h2 className="mt-8 text-xl font-bold">Reviews ({v.review_count})</h2>
+          <h2 className="mt-8 text-xl font-bold">Car reviews ({v.review_count})</h2>
           <div className="mt-3 space-y-3">
-            {reviews.length === 0 && (
+            {reviewsError && (
+              <p role="alert" className="text-sm text-destructive">
+                Couldn't load reviews: {reviewsError.message}
+              </p>
+            )}
+            {reviewsLoading && <p className="text-sm text-muted-foreground">Loading reviews…</p>}
+            {!reviewsLoading && !reviewsError && reviews.length === 0 && (
               <p className="text-sm text-muted-foreground">No written reviews yet.</p>
             )}
             {reviews.map((r) => (
@@ -189,6 +199,11 @@ function CarDetail() {
                     />
                   ))}
                 </p>
+                {r.company_rating && (
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Rental company: {r.company_rating}/5
+                  </p>
+                )}
                 {r.comment && <p className="mt-2 text-sm">{r.comment}</p>}
                 <p className="mt-1 text-xs text-muted-foreground">{dateOnly(r.created_at)}</p>
               </div>
@@ -223,6 +238,14 @@ function CarDetail() {
               <b>{Number(v.rating).toFixed(1)}</b>
               <span className="text-muted-foreground">({v.review_count} reviews)</span>
             </p>
+            {v.companies?.review_count ? (
+              <p className="mt-1 text-sm text-muted-foreground">
+                Rental company rating: {Number(v.companies.rating).toFixed(1)} / 5 (
+                {v.companies.review_count} review{v.companies.review_count === 1 ? "" : "s"})
+              </p>
+            ) : (
+              <p className="mt-1 text-sm text-muted-foreground">Not yet rated by renters</p>
+            )}
             <p className="mt-5">
               <span className="text-3xl font-extrabold">{money(v.price_per_day)}</span>
               <span className="text-muted-foreground"> / day</span>
