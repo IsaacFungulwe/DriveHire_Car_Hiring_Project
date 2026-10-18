@@ -329,16 +329,19 @@ function Cars() {
       ) : (
         <>
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {cars.map((v) => (
-              <VehicleCard
-                key={v.id}
-                v={v}
-                recentReview={recentReviews.get(v.id)}
-                {...(s.pickup && s.return
-                  ? { search: { pickup: s.pickup, return: s.return } }
-                  : {})}
-              />
-            ))}
+            {cars.map((v) => {
+              const recentReview = recentReviews.get(v.id);
+              return (
+                <VehicleCard
+                  key={v.id}
+                  v={v}
+                  {...(recentReview ? { recentReview } : {})}
+                  {...(s.pickup && s.return
+                    ? { search: { pickup: s.pickup, return: s.return } }
+                    : {})}
+                />
+              );
+            })}
           </div>
           {pageCount > 1 && (
             <div className="mt-8 flex items-center justify-center gap-4">
