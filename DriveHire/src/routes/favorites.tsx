@@ -25,7 +25,7 @@ function Favs({ userId }: { userId: string }) {
       (
         await supabase
           .from("favorites")
-          .select("vehicles(*, companies(name,is_verified))")
+          .select("vehicles(*, companies(name,is_verified,rating,review_count))")
           .eq("user_id", userId)
       ).data ?? [],
   });

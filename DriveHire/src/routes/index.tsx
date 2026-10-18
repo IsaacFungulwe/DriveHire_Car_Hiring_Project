@@ -40,7 +40,7 @@ function Home() {
     queryFn: async () => {
       const { data } = await supabase
         .from("vehicles")
-        .select("*, companies(name,is_verified)")
+        .select("*, companies(name,is_verified,rating,review_count)")
         .eq("status", "approved")
         .order("rating", { ascending: false })
         .limit(8);
