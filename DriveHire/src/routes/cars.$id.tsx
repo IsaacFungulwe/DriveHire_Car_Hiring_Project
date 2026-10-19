@@ -141,6 +141,11 @@ function CarDetail() {
               priority
             />
           </div>
+          {!v.image_path && (
+            <p className="mt-2 text-xs text-muted-foreground">
+              Illustrative photo — this is not a photo of the exact rental vehicle.
+            </p>
+          )}
           <div className="mt-6 grid grid-cols-3 gap-3 sm:grid-cols-6">
             {specs.map((s) => (
               <div

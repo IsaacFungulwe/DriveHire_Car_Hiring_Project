@@ -48,6 +48,8 @@ Each account has one role. Promoting an existing account to admin replaces its c
 
 Apply all migrations in `supabase/migrations/` before deploying. The latest migrations add date-aware car availability search, server-side booking change requests, verified completed-trip reviews and company ratings. Company owners also have an availability calendar, booking-value reports with CSV export, and fleet listing controls.
 
+The demo fleet is seeded by Supabase migrations. Demo vehicles use the four bundled images in `src/assets/cars/` (`corolla.jpg`, `hatch.jpg`, `suv.jpg`, and `exec.jpg`) through `image_key`; they are local project assets, not live external image URLs. These are illustrative stock images and may not depict the exact vehicle. Customer-uploaded vehicle images are stored in the Supabase `vehicles` storage bucket.
+
 ## Start the Development Server
 
 ```sh

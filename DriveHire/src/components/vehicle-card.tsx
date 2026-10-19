@@ -32,13 +32,18 @@ export function VehicleCard({
       {...(search ? { search } : {})}
       className="group overflow-hidden rounded-2xl bg-card shadow-[var(--shadow-card)] transition hover:shadow-[var(--shadow-lift)]"
     >
-      <div className="aspect-[3/2] overflow-hidden bg-muted">
+      <div className="relative aspect-[3/2] overflow-hidden bg-muted">
         <VehicleImage
           imageKey={v.image_key}
           imagePath={v.image_path}
           alt={`${v.brand} ${v.model}`}
           className="transition duration-500 group-hover:scale-105"
         />
+        {!v.image_path && (
+          <span className="absolute right-2 top-2 rounded-full bg-background/90 px-2 py-1 text-[10px] font-medium text-muted-foreground shadow">
+            Illustrative photo
+          </span>
+        )}
       </div>
       <div className="p-4">
         <div className="flex items-start justify-between gap-2">
