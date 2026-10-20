@@ -50,6 +50,20 @@ Apply all migrations in `supabase/migrations/` before deploying. The latest migr
 
 The demo fleet is seeded by Supabase migrations. Demo vehicles use the four bundled images in `src/assets/cars/` (`corolla.jpg`, `hatch.jpg`, `suv.jpg`, and `exec.jpg`) through `image_key`; they are local project assets, not live external image URLs. These are illustrative stock images and may not depict the exact vehicle. Customer-uploaded vehicle images are stored in the Supabase `vehicles` storage bucket.
 
+## Launch readiness
+
+The app includes public draft [Terms of service](/terms) and [Privacy notice](/privacy), plus authenticated support and dispute requests. Apply the `20261020100000_launch_essentials.sql` migration along with all earlier migrations. Admins can triage requests from the Admin dashboard; resolving a request sends an in-app notification. Support is not an emergency service, and no external support email or phone number is configured.
+
+The legal pages are placeholders, not legal advice. Before launch, have qualified counsel review them for the confirmed operating jurisdiction, name the legal entity and privacy contact, publish applicable cancellation/refund rules, and finalize data retention, deletion, and response-time policies.
+
+The booking flow is a demo and does not process payments or collect card details. Do not accept real bookings until a payment provider, refunds, deposits, taxes, rental-company agreements, actual vehicle photos, and the booking handover process have been configured and tested.
+
+### Backups and monitoring (operator setup required)
+
+- **Backups:** In the Supabase project dashboard, confirm the database backup schedule and retention available for your plan. For production, enable point-in-time recovery if appropriate for the plan and recovery objectives. Document who can restore, test a restore into a separate project before launch, and record the recovery point and verification steps. This repository does not configure or verify a hosted backup schedule.
+- **Monitoring:** Configure production alerts for Supabase database/API errors, authentication failures, storage issues, and hosting availability. The app's existing editor-preview error reporting is not a production monitoring integration. Select and configure a production error tracker and alert destination, verify a test event reaches the on-call contact, and document incident ownership before launch.
+- **Access and operations:** Restrict production dashboard and service-role access, keep secrets out of client variables, review database audit logs, and establish a process for support-ticket and safety escalation. No production backup restore, monitoring provider, or on-call contact has been configured by this repository.
+
 ## Start the Development Server
 
 ```sh

@@ -15,7 +15,10 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as FavoritesRouteImport } from './routes/favorites'
 import { Route as NotificationsRouteImport } from './routes/notifications'
 import { Route as OwnerRouteImport } from './routes/owner'
+import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as ProfileRouteImport } from './routes/profile'
+import { Route as SupportRouteImport } from './routes/support'
+import { Route as TermsRouteImport } from './routes/terms'
 import { Route as BookIdRouteImport } from './routes/book.$id'
 import { Route as BookingsIndexRouteImport } from './routes/bookings.index'
 import { Route as BookingsIdRouteImport } from './routes/bookings.$id'
@@ -52,9 +55,24 @@ const OwnerRoute = OwnerRouteImport.update({
   path: '/owner',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ProfileRoute = ProfileRouteImport.update({
   id: '/profile',
   path: '/profile',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SupportRoute = SupportRouteImport.update({
+  id: '/support',
+  path: '/support',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TermsRoute = TermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
   getParentRoute: () => rootRouteImport,
 } as any)
 const BookIdRoute = BookIdRouteImport.update({
@@ -90,7 +108,10 @@ export interface FileRoutesByFullPath {
   '/favorites': typeof FavoritesRoute
   '/notifications': typeof NotificationsRoute
   '/owner': typeof OwnerRoute
+  '/privacy': typeof PrivacyRoute
   '/profile': typeof ProfileRoute
+  '/support': typeof SupportRoute
+  '/terms': typeof TermsRoute
   '/book/$id': typeof BookIdRoute
   '/bookings/$id': typeof BookingsIdRoute
   '/cars/$id': typeof CarsIdRoute
@@ -104,7 +125,10 @@ export interface FileRoutesByTo {
   '/favorites': typeof FavoritesRoute
   '/notifications': typeof NotificationsRoute
   '/owner': typeof OwnerRoute
+  '/privacy': typeof PrivacyRoute
   '/profile': typeof ProfileRoute
+  '/support': typeof SupportRoute
+  '/terms': typeof TermsRoute
   '/book/$id': typeof BookIdRoute
   '/bookings/$id': typeof BookingsIdRoute
   '/cars/$id': typeof CarsIdRoute
@@ -119,7 +143,10 @@ export interface FileRoutesById {
   '/favorites': typeof FavoritesRoute
   '/notifications': typeof NotificationsRoute
   '/owner': typeof OwnerRoute
+  '/privacy': typeof PrivacyRoute
   '/profile': typeof ProfileRoute
+  '/support': typeof SupportRoute
+  '/terms': typeof TermsRoute
   '/book/$id': typeof BookIdRoute
   '/bookings/$id': typeof BookingsIdRoute
   '/cars/$id': typeof CarsIdRoute
@@ -135,7 +162,10 @@ export interface FileRouteTypes {
     | '/favorites'
     | '/notifications'
     | '/owner'
+    | '/privacy'
     | '/profile'
+    | '/support'
+    | '/terms'
     | '/book/$id'
     | '/bookings/$id'
     | '/cars/$id'
@@ -149,7 +179,10 @@ export interface FileRouteTypes {
     | '/favorites'
     | '/notifications'
     | '/owner'
+    | '/privacy'
     | '/profile'
+    | '/support'
+    | '/terms'
     | '/book/$id'
     | '/bookings/$id'
     | '/cars/$id'
@@ -163,7 +196,10 @@ export interface FileRouteTypes {
     | '/favorites'
     | '/notifications'
     | '/owner'
+    | '/privacy'
     | '/profile'
+    | '/support'
+    | '/terms'
     | '/book/$id'
     | '/bookings/$id'
     | '/cars/$id'
@@ -178,7 +214,10 @@ export interface RootRouteChildren {
   FavoritesRoute: typeof FavoritesRoute
   NotificationsRoute: typeof NotificationsRoute
   OwnerRoute: typeof OwnerRoute
+  PrivacyRoute: typeof PrivacyRoute
   ProfileRoute: typeof ProfileRoute
+  SupportRoute: typeof SupportRoute
+  TermsRoute: typeof TermsRoute
   BookIdRoute: typeof BookIdRoute
   BookingsIdRoute: typeof BookingsIdRoute
   CarsIdRoute: typeof CarsIdRoute
@@ -230,11 +269,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OwnerRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/profile': {
       id: '/profile'
       path: '/profile'
       fullPath: '/profile'
       preLoaderRoute: typeof ProfileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/support': {
+      id: '/support'
+      path: '/support'
+      fullPath: '/support'
+      preLoaderRoute: typeof SupportRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/terms': {
+      id: '/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof TermsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/book/$id': {
@@ -282,7 +342,10 @@ const rootRouteChildren: RootRouteChildren = {
   FavoritesRoute: FavoritesRoute,
   NotificationsRoute: NotificationsRoute,
   OwnerRoute: OwnerRoute,
+  PrivacyRoute: PrivacyRoute,
   ProfileRoute: ProfileRoute,
+  SupportRoute: SupportRoute,
+  TermsRoute: TermsRoute,
   BookIdRoute: BookIdRoute,
   BookingsIdRoute: BookingsIdRoute,
   CarsIdRoute: CarsIdRoute,

@@ -1,11 +1,13 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Building2, CalendarDays, Mail, MapPin, Phone } from "lucide-react";
+import { useState } from "react";
 import { toast } from "sonner";
 
 import { PageHeader, StatusBadge } from "@/components/app-shell";
 import { Gate } from "@/components/gate";
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { dateTime, money } from "@/lib/format";
@@ -113,6 +115,7 @@ function Admin({ actorId }: { actorId: string }) {
           <TabsTrigger value="companies">Companies</TabsTrigger>
           <TabsTrigger value="users">Users</TabsTrigger>
           <TabsTrigger value="bookings">Bookings</TabsTrigger>
+          <TabsTrigger value="support">Support</TabsTrigger>
           <TabsTrigger value="logs">Audit log</TabsTrigger>
         </TabsList>
         <TabsContent value="applications" className="space-y-4">
@@ -351,7 +354,135 @@ function Admin({ actorId }: { actorId: string }) {
             </p>
           ))}
         </TabsContent>
+        <TabsContent value="support">
+          <SupportInbox />
+        </TabsContent>
       </Tabs>
+    </div>
+  );
+}
+
+function SupportInbox() {
+  const qc = useQueryClient();
+  const [responses, setResponses] = useState<Record<string, string>>({});
+  const {
+    data: requests = [],
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: ["admin", "support"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("support_requests")
+        .select("*")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+  });
+  const updateRequest = useMutation({
+    mutationFn: async ({
+      id,
+      status,
+      response,
+    }: {
+      id: string;
+      status: "open" | "in_progress" | "resolved";
+      response: string;
+    }) => {
+      if (status === "resolved" && !response.trim()) {
+        throw new Error("Add a response before resolving this request.");
+      }
+      const { error } = await supabase.rpc("respond_to_support_request", {
+        p_request_id: id,
+        p_status: status,
+        p_response: response.trim(),
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["admin", "support"] });
+      qc.invalidateQueries({ queryKey: ["my-support-requests"] });
+      toast.success("Support request updated.");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  if (isLoading) return <p className="text-sm text-muted-foreground">Loading support requests…</p>;
+  if (error)
+    return (
+      <p role="alert" className="text-sm text-destructive">
+        Couldn't load support requests: {error.message}
+      </p>
+    );
+  if (requests.length === 0)
+    return <p className="text-sm text-muted-foreground">No support requests yet.</p>;
+
+  return (
+    <div className="space-y-3">
+      {requests.map((request) => (
+        <article key={request.id} className="space-y-3 rounded-2xl bg-card p-4 shadow-sm">
+          <div className="flex flex-wrap items-start justify-between gap-2">
+            <div>
+              <h3 className="font-semibold">{request.subject}</h3>
+              <p className="text-xs text-muted-foreground">
+                {request.category} · {dateTime(request.created_at)}
+              </p>
+            </div>
+            <StatusBadge status={request.status} />
+          </div>
+          <p className="whitespace-pre-wrap text-sm">{request.message}</p>
+          <p className="break-all text-xs text-muted-foreground">
+            Customer {request.user_id}
+            {request.booking_id ? ` · Booking ${request.booking_id}` : ""}
+          </p>
+          {request.admin_response && (
+            <p className="rounded-lg bg-secondary p-3 text-sm">
+              <strong>Previous response: </strong>
+              {request.admin_response}
+            </p>
+          )}
+          <Textarea
+            value={responses[request.id] ?? request.admin_response ?? ""}
+            onChange={(event) =>
+              setResponses((current) => ({ ...current, [request.id]: event.target.value }))
+            }
+            maxLength={5000}
+            rows={3}
+            aria-label={`Response to ${request.subject}`}
+            placeholder="Write a response. A response is required to resolve the request."
+          />
+          <div className="flex flex-wrap gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={updateRequest.isPending}
+              onClick={() =>
+                updateRequest.mutate({
+                  id: request.id,
+                  status: "in_progress",
+                  response: responses[request.id] ?? "",
+                })
+              }
+            >
+              Mark in progress
+            </Button>
+            <Button
+              size="sm"
+              disabled={updateRequest.isPending}
+              onClick={() =>
+                updateRequest.mutate({
+                  id: request.id,
+                  status: "resolved",
+                  response: responses[request.id] ?? request.admin_response ?? "",
+                })
+              }
+            >
+              Send response and resolve
+            </Button>
+          </div>
+        </article>
+      ))}
     </div>
   );
 }

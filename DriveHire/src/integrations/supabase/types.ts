@@ -8,6 +8,53 @@ export type Database = {
   };
   public: {
     Tables: {
+      support_requests: {
+        Row: {
+          admin_response: string | null;
+          booking_id: string | null;
+          category: string;
+          created_at: string;
+          id: string;
+          message: string;
+          status: string;
+          subject: string;
+          updated_at: string;
+          user_id: string;
+        };
+        Insert: {
+          admin_response?: string | null;
+          booking_id?: string | null;
+          category: string;
+          created_at?: string;
+          id?: string;
+          message: string;
+          status?: string;
+          subject: string;
+          updated_at?: string;
+          user_id: string;
+        };
+        Update: {
+          admin_response?: string | null;
+          booking_id?: string | null;
+          category?: string;
+          created_at?: string;
+          id?: string;
+          message?: string;
+          status?: string;
+          subject?: string;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "support_requests_booking_id_fkey";
+            columns: ["booking_id"];
+            isOneToOne: false;
+            referencedRelation: "bookings";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       audit_logs: {
         Row: {
           action: string;
@@ -569,6 +616,16 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      respond_to_support_request: {
+        Args: { p_request_id: string; p_response: string; p_status: string };
+        Returns: Database["public"]["Tables"]["support_requests"]["Row"];
+        SetofOptions: {
+          from: "*";
+          to: "support_requests";
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
+      };
       decide_booking_change: {
         Args: { p_decision: string; p_note: string; p_request_id: string };
         Returns: {

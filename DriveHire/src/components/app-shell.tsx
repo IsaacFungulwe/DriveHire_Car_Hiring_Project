@@ -123,6 +123,25 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
       </header>
       <main>{children}</main>
+      <footer className="border-t border-border bg-card px-4 py-6">
+        <nav
+          aria-label="Legal and support"
+          className="mx-auto flex max-w-6xl flex-wrap justify-center gap-x-6 gap-y-2 text-sm text-muted-foreground"
+        >
+          <Link to="/support" className="hover:text-foreground">
+            Support and disputes
+          </Link>
+          <Link to="/terms" className="hover:text-foreground">
+            Terms of service
+          </Link>
+          <Link to="/privacy" className="hover:text-foreground">
+            Privacy notice
+          </Link>
+        </nav>
+        <p className="mt-3 text-center text-xs text-muted-foreground">
+          DriveHire is a demonstration marketplace; payments are not currently processed.
+        </p>
+      </footer>
       <nav className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-5 border-t border-border bg-card md:hidden">
         {[
           { to: "/", icon: Home, label: "Home" },
@@ -176,6 +195,9 @@ export function PageHeader({
 export function StatusBadge({ status }: { status: string }) {
   const label: Record<string, string> = {
     pending: "Awaiting confirmation",
+    open: "Open",
+    in_progress: "In progress",
+    resolved: "Resolved",
     confirmed: "Confirmed",
     ready: "Ready for pickup",
     active: "On trip",
@@ -188,6 +210,9 @@ export function StatusBadge({ status }: { status: string }) {
   };
   const tone: Record<string, string> = {
     pending: "bg-warning/15 text-warning-foreground",
+    open: "bg-warning/15 text-warning-foreground",
+    in_progress: "bg-primary/10 text-primary",
+    resolved: "bg-success/15 text-success",
     confirmed: "bg-primary/10 text-primary",
     ready: "bg-accent/15 text-accent-foreground",
     active: "bg-accent/20 text-accent-foreground",

@@ -1,6 +1,6 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { CreditCard, ShieldCheck } from "lucide-react";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { ShieldCheck } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -53,7 +53,6 @@ function BookPage() {
   const [returnLoc, setReturnLoc] = useState("");
   const [extras, setExtras] = useState<string[]>([]);
   const [terms, setTerms] = useState(false);
-  const [card, setCard] = useState("");
 
   const { data: v } = useQuery({
     queryKey: ["car", id],
@@ -74,7 +73,6 @@ function BookPage() {
 
   const book = useMutation({
     mutationFn: async () => {
-      if (card.replace(/\D/g, "").length < 12) throw new Error("Enter a valid card number.");
       const { data, error } = await supabase.rpc("create_booking", {
         p_vehicle_id: id,
         p_pickup_at: new Date(pickupAt).toISOString(),
@@ -175,25 +173,22 @@ function BookPage() {
             </p>
           </section>
           <section className="space-y-3 rounded-2xl bg-card p-5 shadow-[var(--shadow-card)]">
-            <h2 className="font-bold">3. Payment</h2>
-            <div className="relative">
-              <CreditCard className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                className="pl-9"
-                placeholder="Card number"
-                value={card}
-                onChange={(e) => setCard(e.target.value)}
-                inputMode="numeric"
-              />
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Demo payment — your card is only charged once the company confirms. No real money
-              moves yet.
+            <h2 className="font-bold">3. Review and submit</h2>
+            <p className="rounded-lg bg-warning/10 p-3 text-sm">
+              Demo booking only. No payment is processed, and no card details are collected.
             </p>
             <label className="flex items-start gap-2 text-sm">
               <Checkbox checked={terms} onCheckedChange={(c) => setTerms(!!c)} />I accept the rental
               agreement, cancellation policy ({v.cancellation_policy}) and refundable deposit of{" "}
-              {money(v.deposit)}.
+              {money(v.deposit)}. Read the{" "}
+              <Link to="/terms" className="text-primary underline">
+                draft marketplace terms
+              </Link>{" "}
+              and{" "}
+              <Link to="/privacy" className="text-primary underline">
+                privacy notice
+              </Link>
+              .
             </label>
           </section>
         </div>
